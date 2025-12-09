@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soulja Boy: Battle Rap Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 100%);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(180deg, #0d0221 0%, #0f0524 100%);
+            border: 5px solid #ff0066;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(255, 0, 102, 0.5);
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        h1 {
+            font-size: 48px;
+            color: #ff0066;
+            text-shadow: 0 0 20px #ff0066, 0 0 40px #ff00ff;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .subtitle {
+            font-size: 24px;
+            color: #00ffff;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff0066, #ff00ff);
+            border: none;
+            border-radius: 50px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(255, 0, 102, 0.5);
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(255, 0, 102, 0.8);
+        }
+
+                    #instructions {
+            color: #fff;
+            font-size: 16px;
+            margin-top: 20px;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        #targetInfo {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            border-radius: 15px;
+            border: 2px solid #00ffff;
+            z-index: 5;
+            font-size: 16px;
+            color: #fff;
+        }
+
+        #targetInfo.hidden {
+            display: none;
+        }
+
+        .shoot-indicator {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .avoid-indicator {
+            color: #ff0066;
+            font-weight: bold;
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 28px;
+            color: #00ffff;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00ffff;
+            z-index: 5;
+        }
+
+        #lives {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 28px;
+            color: #ff0066;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff0066;
+            z-index: 5;
+        }
+
+        #powerup {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            font-size: 18px;
+            color: #ff00ff;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff00ff;
+            z-index: 5;
+        }
+
+        #endGameBtn {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff0066, #ff00ff);
+            border: none;
+            border-radius: 25px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 3px 15px rgba(255, 0, 102, 0.5);
+            text-transform: uppercase;
+            z-index: 5;
+        }
+
+        #endGameBtn:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 5px 20px rgba(255, 0, 102, 0.8);
+        }
+
+        #level {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            font-size: 20px;
+            color: #ffaa00;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ffaa00;
+            z-index: 5;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #finalScore {
+            font-size: 36px;
+            color: #00ffff;
+            margin: 20px 0;
+        }
+
+        #navLinks {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            border: 3px solid #ff0066;
+            text-align: center;
+        }
+
+        #navLinks h2 {
+            color: #00ffff;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin: 10px 15px;
+            padding: 12px 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .nav-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            background: linear-gradient(45deg, #764ba2, #667eea);
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="canvas" width="800" height="600"></canvas>
+        
+        <div id="score">Score: 0</div>
+        <div id="lives">❤️ 3</div>
+        <div id="level">Level: 1</div>
+        <button id="endGameBtn" onclick="endGameEarly()">END GAME</button>
+        <div id="powerup"></div>
+        <div id="targetInfo">
+            <span class="shoot-indicator">SHOOT: 💎 Diamonds</span> | 
+            <span class="avoid-indicator">AVOID: 💀 Haters</span>
+        </div>
+
+        <div id="startScreen">
+            <h1>🎤 SOULJA BOY 🎤</h1>
+            <div class="subtitle">BATTLE RAP EDITION</div>
+            <button onclick="startGame()">START GAME</button>
+            <div id="instructions">
+                ← → ARROW KEYS to move | SPACEBAR to shoot 🎤<br>
+                <span style="color: #00ff00;">SHOOT 💎 DIAMONDS</span> to score points (+20 pts)<br>
+                <span style="color: #ff0066;">AVOID 💀 HATERS</span> (they take your lives!)<br>
+                Get ⚡ POWER-UPS ⚡ for special abilities<br>
+                Defend the stage!
+            </div>
+        </div>
+
+        <div id="gameOverScreen" class="hidden">
+            <h1>GAME OVER!</h1>
+            <div id="finalScore">Score: 0</div>
+            <button onclick="restartGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <div id="navLinks">
+        <h2>🔗 Navigate to Other Pages</h2>
+        <a href="index.html" class="nav-link">Resume</a>
+        <a href="scratchpage.html" class="nav-link">Crank That</a>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const scoreDisplay = document.getElementById('score');
+        const livesDisplay = document.getElementById('lives');
+        const levelDisplay = document.getElementById('level');
+        const powerupDisplay = document.getElementById('powerup');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const targetInfo = document.getElementById('targetInfo');
+        const endGameBtn = document.getElementById('endGameBtn');
+
+        // Audio context for music
+        let audioContext;
+        let musicPlaying = false;
+        let masterGain;
+
+        // Game variables
+        let player = {
+            x: 400,
+            y: 520,
+            width: 60,
+            height: 60,
+            speed: 10
+        };
+
+        let projectiles = [];
+        let targets = [];
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let gameRunning = false;
+        let animationId;
+        let spawnTimer = 0;
+        let shootCooldown = 0;
+        let activePowerup = null;
+        let powerupDuration = 0;
+        let difficultyMultiplier = 1;
+        let currentColorScheme = 0;
+        
+        // Color schemes for different score levels
+        const colorSchemes = [
+            { bg1: '#0d0221', bg2: '#0f0524', border: '#ff0066', name: 'Red' },
+            { bg1: '#021a0d', bg2: '#05240f', border: '#00ff66', name: 'Green' },
+            { bg1: '#02100d', bg2: '#051f24', border: '#00ccff', name: 'Cyan' },
+            { bg1: '#1a0d02', bg2: '#241505', border: '#ff6600', name: 'Orange' },
+            { bg1: '#0d021a', bg2: '#150524', border: '#cc00ff', name: 'Purple' },
+            { bg1: '#1a1a02', bg2: '#242405', border: '#ffff00', name: 'Yellow' }
+        ];
+
+        // Controls
+        let keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ' && gameRunning && shootCooldown <= 0) {
+                shootProjectile();
+                shootCooldown = activePowerup === 'rapid' ? 5 : 15;
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Musical notes (frequencies)
+        const notes = {
+            'C2': 65.41, 'D2': 73.42, 'E2': 82.41,
+            'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00,
+            'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23,
+            'G4': 392.00, 'A4': 440.00, 'Bb4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46,
+            'G5': 783.99, 'A5': 880.00, 'C6': 1046.50
+        };
+
+        // Intense electronic bassline and lead
+        const bassPattern = ['C2', 'C2', 'D2', 'E2', 'C2', 'C2', 'D2', 'E2'];
+        const leadPattern = [
+            ['C5', 'E5', 'G5', 'A5'],
+            ['C5', 'E5', 'G5', 'C6'],
+            ['D5', 'F5', 'A5', 'C6'],
+            ['E5', 'G5', 'B4', 'E5']
+        ];
+
+        function playNote(frequency, startTime, duration, gain = 0.3, type = 'sine') {
+            if (!audioContext) return;
+            
+            const osc = audioContext.createOscillator();
+            const oscGain = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+            
+            osc.type = type;
+            osc.frequency.value = frequency;
+            
+            filter.type = 'lowpass';
+            filter.frequency.value = 4000;
+            filter.Q.value = 5;
+            
+            osc.connect(filter);
+            filter.connect(oscGain);
+            oscGain.connect(masterGain);
+            
+            oscGain.gain.setValueAtTime(0, startTime);
+            oscGain.gain.linearRampToValueAtTime(gain, startTime + 0.005);
+            oscGain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        function playDrum(type, startTime, intensity = 1) {
+            if (!audioContext) return;
+            
+            if (type === 'kick') {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.frequency.setValueAtTime(150, startTime);
+                osc.frequency.exponentialRampToValueAtTime(0.01, startTime + 0.5);
+                
+                gain.gain.setValueAtTime(1.5 * intensity, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.5);
+                
+                osc.connect(gain);
+                gain.connect(masterGain);
+                
+                osc.start(startTime);
+                osc.stop(startTime + 0.5);
+            } else if (type === 'snare') {
+                const noise = audioContext.createBufferSource();
+                const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                for (let i = 0; i < buffer.length; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                
+                noise.buffer = buffer;
+                
+                const noiseGain = audioContext.createGain();
+                const noiseFilter = audioContext.createBiquadFilter();
+                
+                noiseFilter.type = 'highpass';
+                noiseFilter.frequency.value = 2000;
+                
+                noise.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                noiseGain.connect(masterGain);
+                
+                noiseGain.gain.setValueAtTime(1.2 * intensity, startTime);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+                
+                noise.start(startTime);
+                
+                // Punch
+                const punch = audioContext.createOscillator();
+                const punchGain = audioContext.createGain();
+                punch.frequency.value = 180;
+                punch.connect(punchGain);
+                punchGain.connect(masterGain);
+                punchGain.gain.setValueAtTime(0.5, startTime);
+                punchGain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.08);
+                punch.start(startTime);
+                punch.stop(startTime + 0.08);
+            } else if (type === 'hihat') {
+                const noise = audioContext.createBufferSource();
+                const buffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.03, audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                for (let i = 0; i < buffer.length; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                
+                noise.buffer = buffer;
+                
+                const noiseGain = audioContext.createGain();
+                const noiseFilter = audioContext.createBiquadFilter();
+                
+                noiseFilter.type = 'highpass';
+                noiseFilter.frequency.value = 10000;
+                
+                noise.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                noiseGain.connect(masterGain);
+                
+                noiseGain.gain.setValueAtTime(0.3 * intensity, startTime);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.03);
+                
+                noise.start(startTime);
+            }
+        }
+
+        function playBackgroundMusic() {
+            if (musicPlaying) return;
+            
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioContext.createGain();
+            masterGain.gain.value = 0.3;
+            masterGain.connect(audioContext.destination);
+            
+            musicPlaying = true;
+
+            let beatCount = 0;
+            let barCount = 0;
+            const tempo = 140; // Fast, intense tempo
+            const beatDuration = 60 / tempo;
+
+            function scheduleNextBeat() {
+                if (!gameRunning) {
+                    musicPlaying = false;
+                    return;
+                }
+
+                const currentTime = audioContext.currentTime;
+                const scheduleAheadTime = 0.1;
+                const sixteenth = beatDuration / 4;
+
+                // Intense kick pattern
+                if (beatCount % 2 === 0) {
+                    playDrum('kick', currentTime + scheduleAheadTime, 1.2);
+                }
+                if (beatCount % 8 === 3 || beatCount % 8 === 7) {
+                    playDrum('kick', currentTime + scheduleAheadTime + sixteenth * 3, 0.8);
+                }
+                
+                // Aggressive snare
+                if (beatCount % 4 === 2) {
+                    playDrum('snare', currentTime + scheduleAheadTime, 1.3);
+                }
+                
+                // Rapid hi-hats
+                for (let i = 0; i < 4; i++) {
+                    playDrum('hihat', currentTime + scheduleAheadTime + sixteenth * i, i % 2 === 0 ? 1 : 0.6);
+                }
+
+                // Heavy bass (every beat)
+                const bassNote = bassPattern[beatCount % 8];
+                playNote(notes[bassNote], currentTime + scheduleAheadTime, beatDuration * 0.9, 0.35, 'sawtooth');
+                
+                // Sub-bass for extra intensity
+                playNote(notes[bassNote] / 2, currentTime + scheduleAheadTime, beatDuration * 0.9, 0.25, 'sine');
+                
+                // Distorted bass layer
+                playNote(notes[bassNote] * 2, currentTime + scheduleAheadTime, beatDuration * 0.7, 0.15, 'square');
+
+                // Aggressive lead synth
+                if (beatCount % 2 === 0) {
+                    const leadLine = leadPattern[barCount % 4];
+                    const leadNote = leadLine[(beatCount / 2) % 4];
+                    playNote(notes[leadNote], currentTime + scheduleAheadTime, beatDuration * 1.8, 0.2, 'sawtooth');
+                    playNote(notes[leadNote] * 1.5, currentTime + scheduleAheadTime, beatDuration * 1.8, 0.12, 'square');
+                }
+                
+                // Arpeggiated synth (intense)
+                if (beatCount % 1 === 0) {
+                    const arpNotes = ['C4', 'E4', 'G4', 'C5'];
+                    const arpNote = arpNotes[beatCount % 4];
+                    playNote(notes[arpNote], currentTime + scheduleAheadTime, beatDuration * 0.3, 0.15, 'square');
+                }
+
+                beatCount++;
+                if (beatCount % 16 === 0) {
+                    barCount++;
+                }
+
+                setTimeout(scheduleNextBeat, beatDuration * 1000);
+            }
+
+            scheduleNextBeat();
+        }
+
+        function shootProjectile() {
+            projectiles.push({
+                x: player.x,
+                y: player.y - 30,
+                speed: 12,
+                emoji: '🎤'
+            });
+            playShootSound();
+        }
+
+        function startGame() {
+            startScreen.classList.add('hidden');
+            targetInfo.classList.add('hidden');
+            endGameBtn.style.display = 'block';
+            gameRunning = true;
+            score = 0;
+            lives = 3;
+            level = 1;
+            projectiles = [];
+            targets = [];
+            player.x = 400;
+            activePowerup = null;
+            powerupDuration = 0;
+            shootCooldown = 0;
+            difficultyMultiplier = 1;
+            currentColorScheme = 0;
+            updateDisplay();
+            playBackgroundMusic();
+            gameLoop();
+        }
+
+        function restartGame() {
+            gameOverScreen.classList.add('hidden');
+            targetInfo.classList.remove('hidden');
+            startGame();
+        }
+        
+        function endGameEarly() {
+            if (gameRunning) {
+                gameOver();
+            }
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            endGameBtn.style.display = 'none';
+            cancelAnimationFrame(animationId);
+            finalScoreDisplay.textContent = `Score: ${score} | Level: ${level}`;
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        function updateDisplay() {
+            scoreDisplay.textContent = `Score: ${score}`;
+            livesDisplay.textContent = '❤️ '.repeat(lives);
+            levelDisplay.textContent = `Level: ${level}`;
+            
+            // Update difficulty and color scheme based on score
+            const oldScheme = currentColorScheme;
+            if (score >= 500) {
+                level = 6;
+                currentColorScheme = 5;
+                difficultyMultiplier = 2.5;
+            } else if (score >= 400) {
+                level = 5;
+                currentColorScheme = 4;
+                difficultyMultiplier = 2.2;
+            } else if (score >= 300) {
+                level = 4;
+                currentColorScheme = 3;
+                difficultyMultiplier = 1.9;
+            } else if (score >= 200) {
+                level = 3;
+                currentColorScheme = 2;
+                difficultyMultiplier = 1.6;
+            } else if (score >= 100) {
+                level = 2;
+                currentColorScheme = 1;
+                difficultyMultiplier = 1.3;
+            } else {
+                level = 1;
+                currentColorScheme = 0;
+                difficultyMultiplier = 1;
+            }
+            
+            // Update border color when scheme changes
+            if (oldScheme !== currentColorScheme && gameRunning) {
+                const scheme = colorSchemes[currentColorScheme];
+                document.getElementById('gameContainer').style.borderColor = scheme.border;
+            }
+            
+            if (activePowerup) {
+                const timeLeft = Math.ceil(powerupDuration / 60);
+                if (activePowerup === 'shield') {
+                    powerupDisplay.textContent = `🛡️ Shield: ${timeLeft}s`;
+                } else if (activePowerup === 'spread') {
+                    powerupDisplay.textContent = `💥 Spread Shot: ${timeLeft}s`;
+                } else if (activePowerup === 'rapid') {
+                    powerupDisplay.textContent = `⚡ Rapid Fire: ${timeLeft}s`;
+                }
+            } else {
+                powerupDisplay.textContent = '';
+            }
+        }
+
+        function spawnTarget() {
+            const rand = Math.random();
+            let type, emoji, color, speed;
+            
+            // Adjust spawn rates based on difficulty
+            const diamondChance = 0.7 - (difficultyMultiplier - 1) * 0.1; // More haters as it gets harder
+            
+            if (rand < diamondChance) {
+                // Diamond (shoot to collect) 
+                type = 'diamond';
+                emoji = '💎';
+                color = '#00ffff';
+                speed = (1.2 + Math.random() * 1) * difficultyMultiplier;
+            } else if (rand < 0.95) {
+                // Hater (avoid)
+                type = 'hater';
+                emoji = '💀';
+                color = '#ff0066';
+                speed = (1.5 + Math.random() * 1.5) * difficultyMultiplier;
+            } else {
+                // Power-up
+                const powerups = [
+                    { type: 'shield', emoji: '🛡️', color: '#ffaa00' },
+                    { type: 'spread', emoji: '💥', color: '#ff00ff' },
+                    { type: 'rapid', emoji: '⚡', color: '#00ff00' }
+                ];
+                const powerup = powerups[Math.floor(Math.random() * powerups.length)];
+                type = powerup.type;
+                emoji = powerup.emoji;
+                color = powerup.color;
+                speed = 1.2 * difficultyMultiplier;
+            }
+            
+            targets.push({
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: -40,
+                width: 50,
+                height: 50,
+                speed: speed,
+                type: type,
+                emoji: emoji,
+                color: color
+            });
+        }
+
+        function drawPlayer() {
+            // Dancing guy emoji (dark skin tone)
+            ctx.font = '60px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Add glow effect
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = activePowerup === 'shield' ? '#ffaa00' : '#ff0066';
+            
+            ctx.fillText('🕺🏿', player.x, player.y);
+            
+            ctx.shadowBlur = 0;
+            
+            // Shield visual
+            if (activePowerup === 'shield') {
+                ctx.strokeStyle = '#ffaa00';
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#ffaa00';
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, 45, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function drawProjectiles() {
+            projectiles.forEach(proj => {
+                ctx.font = '30px Arial';
+                ctx.textAlign = 'center';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00ffff';
+                ctx.fillText(proj.emoji, proj.x, proj.y);
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        function drawTargets() {
+            targets.forEach(target => {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = target.color;
+                
+                ctx.font = '45px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(target.emoji, target.x, target.y);
+                
+                // Add visual indicator for diamonds (SHOOT ME!)
+                if (target.type === 'diamond') {
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.arc(target.x, target.y, 35, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+                
+                // Add warning indicator for haters (DANGER!)
+                if (target.type === 'hater') {
+                    ctx.strokeStyle = '#ff0066';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(target.x, target.y, 35, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        function drawBackground() {
+            // Dynamic background based on color scheme
+            const scheme = colorSchemes[currentColorScheme];
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, scheme.bg1);
+            gradient.addColorStop(1, scheme.bg2);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Fast moving stars
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            for (let i = 0; i < 100; i++) {
+                const x = (i * 37) % canvas.width;
+                const y = (i * 67 + Date.now() * 0.15) % canvas.height;
+                const size = (i % 3) + 1;
+                ctx.fillRect(x, y, size, size);
+            }
+            
+            // Colored alert streaks
+            ctx.strokeStyle = scheme.border + '55'; // Semi-transparent
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 5; i++) {
+                const y = (i * 123 + Date.now() * 0.3) % canvas.height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function updateGame() {
+            // Move player
+            if (keys['ArrowLeft'] && player.x > player.width/2) {
+                player.x -= player.speed;
+            }
+            if (keys['ArrowRight'] && player.x < canvas.width - player.width/2) {
+                player.x += player.speed;
+            }
+
+            // Update shoot cooldown
+            if (shootCooldown > 0) shootCooldown--;
+
+            // Update powerup duration
+            if (activePowerup) {
+                powerupDuration--;
+                if (powerupDuration <= 0) {
+                    activePowerup = null;
+                }
+                updateDisplay();
+            }
+
+            // Spawn targets (faster spawn rate as difficulty increases)
+            spawnTimer++;
+            const spawnRate = Math.max(30, 55 - (difficultyMultiplier - 1) * 10); // Faster spawns at higher levels
+            if (spawnTimer > spawnRate) {
+                spawnTarget();
+                spawnTimer = 0;
+            }
+
+            // Update projectiles
+            projectiles = projectiles.filter(proj => {
+                proj.y -= proj.speed;
+                return proj.y > -50;
+            });
+
+            // Update targets and check collisions
+            targets = targets.filter(target => {
+                target.y += target.speed;
+
+                // Check collision with player
+                if (Math.abs(target.x - player.x) < 50 && 
+                    Math.abs(target.y - player.y) < 50) {
+                    
+                    if (target.type === 'hater') {
+                        if (activePowerup !== 'shield') {
+                            lives--;
+                            playHitSound();
+                            if (lives <= 0) {
+                                gameOver();
+                            }
+                            updateDisplay();
+                        }
+                        return false;
+                    } else if (target.type === 'diamond') {
+                        // Touching diamond gives 5 points
+                        score += 5;
+                        playCollectSound();
+                        updateDisplay();
+                        return false;
+                    } else {
+                        // Power-up collected by touch
+                        activePowerup = target.type;
+                        powerupDuration = 300;
+                        playPowerupSound();
+                        updateDisplay();
+                        return false;
+                    }
+                }
+
+                // Check collision with projectiles
+                for (let i = projectiles.length - 1; i >= 0; i--) {
+                    const proj = projectiles[i];
+                    if (Math.abs(proj.x - target.x) < 40 && 
+                        Math.abs(proj.y - target.y) < 40) {
+                        
+                        if (target.type === 'diamond') {
+                            // Shooting diamond gives 20 points
+                            score += 20;
+                            playCollectSound();
+                            projectiles.splice(i, 1);
+                            updateDisplay();
+                            return false;
+                        } else if (target.type === 'hater') {
+                            // Just destroy the hater, no points
+                            playHitSound();
+                            projectiles.splice(i, 1);
+                            return false;
+                        } else {
+                            // Power-up shot
+                            activePowerup = target.type;
+                            powerupDuration = 300;
+                            playPowerupSound();
+                            projectiles.splice(i, 1);
+                            updateDisplay();
+                            return false;
+                        }
+                    }
+                }
+
+                // Remove if off screen
+                if (target.y > canvas.height + 50) {
+                    // Penalty for missing a diamond!
+                    if (target.type === 'diamond') {
+                        lives--;
+                        playHitSound();
+                        if (lives <= 0) {
+                            gameOver();
+                        }
+                        updateDisplay();
+                    }
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+
+        function playShootSound() {
+            if (!audioContext) return;
+            const now = audioContext.currentTime;
+            playNote(notes['A4'], now, 0.05, 0.2, 'square');
+            playNote(notes['E5'], now + 0.02, 0.05, 0.15, 'square');
+        }
+
+        function playCollectSound() {
+            if (!audioContext) return;
+            const now = audioContext.currentTime;
+            playNote(notes['C6'], now, 0.08, 0.3);
+            playNote(notes['E5'], now + 0.04, 0.08, 0.25);
+            playNote(notes['G5'], now + 0.08, 0.1, 0.3);
+        }
+
+        function playHitSound() {
+            if (!audioContext) return;
+            const now = audioContext.currentTime;
+            playNote(notes['C3'], now, 0.15, 0.5, 'sawtooth');
+            playNote(notes['E2'], now, 0.15, 0.4, 'sawtooth');
+        }
+
+        function playPowerupSound() {
+            if (!audioContext) return;
+            const now = audioContext.currentTime;
+            playNote(notes['C5'], now, 0.1, 0.3);
+            playNote(notes['E5'], now + 0.05, 0.1, 0.3);
+            playNote(notes['G5'], now + 0.1, 0.1, 0.3);
+            playNote(notes['C6'], now + 0.15, 0.2, 0.35);
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            drawBackground();
+            updateGame();
+            drawTargets();
+            drawProjectiles();
+            drawPlayer();
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+    </script>
+</body>
+</html>
